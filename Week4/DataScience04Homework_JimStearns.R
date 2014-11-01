@@ -111,7 +111,6 @@ simpleDetermineCentroids <- function(points=testPoints, clusterIDs=testClusterID
         for (dim in 1:nDims)
         {
             centroids[clusterID, dim] <- mean(pointsInCluster[, dim])
-            centroids[clusterID, dim] <- mean(pointsInCluster[, dim])
         }
     } 
     
