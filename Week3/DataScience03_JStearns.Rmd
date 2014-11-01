@@ -1,0 +1,192 @@
+---
+title: "DataScience03"
+author: "Jim Stearns, in collaboration with Bethene Britt and Lucas Pedroza"
+date: "25 October 2014"
+output: html_document
+---
+
+In-Class Assignment, Week 3
+===
+UW PCE Data Science, Introduction, Fall 2014. Instructor: Dr. Ernst Henle
+
+1. Create an R-file called DataScience03.R
+====
+
+Creating an R Markdown file: DataScience.Rmd. This file.
+
+2. Download the mammographic_masses.data
+```{r}
+url <- "http://archive.ics.uci.edu/ml/machine-learning-databases/mammographic-masses/mammographic_masses.data"
+# Avoid conversion of columns to factors.
+mamm <- read.csv(url, header=F, stringsAsFactors=FALSE)
+
+head(mamm)
+```
+
+3. Assign a vector of real names to the data frame
+====
+Real names are here 
+http://archive.ics.uci.edu/ml/machine-learning-databases/mammographic-masses/mammographic_masses.names
+
+Copied from Section 7 of link above:
+Attribute Information:
+
+1. BI-RADS assessment: 1 to 5 (ordinal)  
+2. Age: patient's age in years (integer)
+3. Shape: mass shape: round=1 oval=2 lobular=3 irregular=4 (nominal)
+4. Margin: mass margin: circumscribed=1 microlobulated=2 obscured=3 ill-defined=4 spiculated=5 (nominal)
+5. Density: mass density high=1 iso=2 low=3 fat-containing=4 (ordinal)
+6. Severity: benign=0 or malignant=1 (binominal)
+
+```{r}
+names(mamm) <- c("BI_RADS", "Age", "Shape", "Margin", "Density", "Severity")
+str(mamm)
+#hist(mamm$BI_RADS) Error: 'x' must be numeric
+sapply(mamm, is) # No "?" in final (result) column because any ? in predictors will yield result of ?
+```
+4. Make sure all columns are not factors
+====
+
+Done above by using parameter stringAsFactors=False in read.csv.
+
+5. Replace "?" with NA
+====
+
+From class: "Data is big. Throw away ill-formed data. If you throw 90% away, OK, then think about it. But if you've got 5M observations and only need 50K, tossing 95% is OK."
+
+```{r}
+nrow_before <- nrow(mamm)
+print(sprintf("Nrows before NA removal=%d", nrow_before))
+
+mamm_as_matrix <- sapply(mamm, as.numeric)
+
+# Get the count of rows with one or more NA cells. 
+# Note: Check for NA (Not Available), not NaN (Not a Number)
+bad_rows <- mamm_as_matrix[!complete.cases(mamm_as_matrix),]
+print(sprintf("Number of rows with at least one NA, according to complete.cases() = %d",
+              nrow(bad_rows)))
+
+# Strip rows with a NA
+mamm_as_matrix <- na.omit(mamm_as_matrix)
+
+mamm_no_nas <- data.frame(mamm_as_matrix)
+str(mamm_no_nas)
+nrow_after <- nrow(mamm_no_nas) 
+nrows_removed <- nrow_before - nrow_after
+nrows_removed
+```
+There were `r nrows_removed` rows with at least one NA removed.
+
+6. Determine obvious outliers using histograms, summary functions, and the data dictionary.
+====
+
+Check all column values for outliers outside the range of legal values for that column.
+Don't toss observations with outlier(s); just bring the outlier into range.
+
+Specify the ranges for all the columns in a dataframe:
+```{r}
+# Col1 (BI_RADS): 1..5
+# Col2 (Age): 0..150 (range picked by me)
+# Col3: Shape: 1..4
+# Col4: Margin: 1..5
+# Col5: Density: 1..4
+# Col6: Severity: 0..1
+
+ranges <- data.frame(matrix(ncol=6, nrow=2))
+colnames(ranges) <- colnames(mamm)
+rownames(ranges) <- c("lower", "upper")
+ranges["lower", "BI_RADS"] <- 1
+ranges["upper", "BI_RADS"] <- 5
+
+ranges["lower", "Age"] <- 0
+ranges["upper", "Age"] <- 150
+
+ranges["lower", "Shape"] <- 1
+ranges["upper", "Shape"] <- 4
+
+ranges["lower", "Margin"] <- 1
+ranges["upper", "Margin"] <- 5
+
+ranges["lower", "Density"] <- 1
+ranges["upper", "Density"] <- 4
+
+ranges["lower", "Severity"] <- 0
+ranges["upper", "Severity"] <- 1
+
+ranges
+```
+Now check each column for outlier values below or above the legal range
+```{r}
+check_bound <- function(mamm, colidx, bound_type, bound_value) {
+    
+    col_values <- mamm[,colidx]
+    if (bound_type == "upper") {
+        col_vector <- (col_values > bound_value)
+    } else {
+        col_vector <- (col_values < bound_value)
+    }
+    noutliers = sum(col_vector == TRUE)
+    if (is.null(noutliers)) { 
+        noutliers = 0 
+    }
+    if (noutliers > 0) {
+        mamm[col_vector == TRUE, colidx] <- bound_value
+        print(sprintf("Changed these %d %s bound outliers for %s to value %d:", 
+                      noutliers, bound_type, col_name, bound_value))
+        print(mamm[col_vector == TRUE, colidx])
+    }
+    else {
+         print(sprintf("No %s outliers for %s", bound_type, col_name))
+    }
+    
+    # Function parameters in R are pass by value, not pass by reference.
+    # Implication: changes to mamm parameter are not seen in calling environment,
+    # unless mamm is also returned.
+    return(list("noutliers"= noutliers, "mamm" = mamm))
+}
+
+for (colidx in 1:ncol(ranges)) {
+    col_name <- colnames(ranges)[colidx]
+    
+    # Initial histogram before any range bounding
+    hist(mamm_no_nas[ , colidx], breaks=100, xlab="",
+         main=sprintf("%s before any range bounding", col_name))
+    
+    ##
+    # Lower outlier check
+    ##
+    bound_type = "lower"
+    bound_value <- ranges[bound_type, colidx]
+    check_bound_return_list = check_bound(
+        mamm_no_nas, colidx, bound_type, bound_value)
+    # Unpack the pair of values returned in a list by check_bound
+    n_lower_outliers <- check_bound_return_list$noutliers
+    mamm_no_nas <- check_bound_return_list$mamm
+    
+    ##
+    # Upper outlier check
+    ##
+    bound_type <- "upper"
+    bound_value <- ranges[bound_type, colidx]
+    check_bound_return_list = check_bound(
+        mamm_no_nas, colidx, bound_type, bound_value)
+    # Unpack the pair of values returned in a list by check_bound
+    n_upper_outliers <- check_bound_return_list$noutliers
+    mamm_no_nas <- check_bound_return_list$mamm
+        
+    # If any outliers were found and fixed, show a new histogram
+    if (n_lower_outliers + n_upper_outliers > 0) {
+        hist(mamm_no_nas[ , colidx], breaks=100, xlab="",
+         main=sprintf("%s after %d outliers moved into range", 
+                      col_name, n_lower_outliers + n_upper_outliers))
+    }
+}
+
+mamm_clean <- mamm_no_nas
+```
+
+7. Write the data frame to a csv file called mamm.csv
+====
+Skip writing a number as a row name.
+```{r}
+write.csv(mamm_clean, file="mamm.csv", row.names=FALSE)
