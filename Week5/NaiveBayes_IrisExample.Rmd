@@ -1,0 +1,44 @@
+---
+title: "BayesAppliedToIris"
+author: "http://en.wikibooks.org/wiki/Data_Mining_Algorithms_In_R/Classification/Naïve_Bayes"
+date: "November 12, 2014"
+output: html_document
+---
+
+*(This is re-creation of a wikibooks web page that I strongly suppose to be R markdown.
+The page was brought to the class's attention by fellow student Andrew Ewing in a
+post to the [class LinkedIn page](https://www.linkedin.com/groupItem?view=&gid=6784468&type=member&item=5936615293844480002&trk=groups_most_recent-0-b-ttl&goback=%2Egmr_6784468%2Egde_6784468_member_5936866490182569985%2Egmr_6784468))*
+
+
+## Installing and Running the Naive Bayes Classifier
+```{r}
+#install.packages('e1071', dependencies=TRUE)
+library(class)
+library(e1071)
+```
+
+### Dataset
+
+The Iris dataset comes with R's "datasets" package:
+```{r}
+datasetsInfo <- data.frame(data(package='datasets')$results)
+datasetsInfo[datasetsInfo$Item == 'iris', ]
+```
+The Iris dataset contains 150 instances, corresponding to three equally-frequent species of iris plant (Iris setosa, Iris versicolour, and Iris virginica). 
+Each instance contains four attributes:sepal length in cm, sepal width in cm, petal length in cm, and petal width in cm. The next picture shows each attribute plotted against the others, with the different classes in color.
+```{r}
+pairs(iris[1:4], main = "Iris Data (red=setosa,green=versicolor,blue=virginica)",
+      pch = 21, bg = c("red", "green3", "blue")[unclass(iris$Species)])
+```
+
+*(Hadn't seen 'unclass' used before. From [stat.ethz.ch](https://stat.ethz.ch/R-manual/R-devel/library/base/html/class.html): "unclass returns (a copy of) its argument with its class attribute removed.")*
+
+### Execution and Results
+```{r}
+data(iris)
+summary(iris)
+
+classifier <- naiveBayes(iris[,1:4], iris[,5])
+table(predict(classifier, iris[,-5]), iris[,5])
+```
+*(Note that training set == test set. OK when trying to keep example simple)*
