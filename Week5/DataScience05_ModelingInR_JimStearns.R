@@ -11,7 +11,7 @@
 
 # Clear objects from Memory
 rm(list=ls())
-# Clear Console:
+# Clear Console:    
 cat("\014")
 
 #setwd("~/GoogleDrive/Learning/Courses/UWPCE-DataScience/Course1_Intro/Repo/IntroToDS-Fall2014/Week5")
@@ -185,13 +185,32 @@ doTheAnalysis <- function(modelingData)
     print(sprintf("The two Naive Bayes calculations yield the same confusion matrix: %s",
                   tableCompareResult))
     ###################################################
+    
+    # ROC Experimentation
+    rocdata <- list(pred=nbPredictedProbabilities[,2], truth=actual, 
+                    main=paste(datasetDescription, "Naive Bayes"))
+    return(rocdata)
+}
+
+library(ROCR)
+rocplot <- function(pred, truth, ...)
+{
+    predob <- prediction(pred, truth)
+    perf <- performance(predob, "tpr", "fpr")
+    plot(perf, ...)
 }
 
 # Get cleaned modeling data for Indian Liver Patient dataset, and analyze.
 modelingData <- GetDemoData(1)
-doTheAnalysis(modelingData)
+rocdata_liver <- doTheAnalysis(modelingData)
 
 # Get cleaned modeling data for Mammographic Masses dataset, and analyze.
 modelingData <- GetDemoData(2)
-doTheAnalysis(modelingData)
+rocdata_masses <- doTheAnalysis(modelingData)
+
+# Display the Receiver Operating Characteristics curve for 
+# the Naive Bayes for both datasets
+par(mfrow=c(2,1))
+rocplot(rocdata_liver$pred, rocdata_liver$truth, main=rocdata_liver$main, col="red")
+rocplot(rocdata_masses$pred, rocdata_masses$truth, main=rocdata_masses$main, col="green")
 
