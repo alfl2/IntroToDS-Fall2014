@@ -1,0 +1,44 @@
+1.Why are performance metrics better on training data than on test data? 
+Because the model has been trained by the training data, the model should result in better performance metric than test data. 
+2.How do you determine which data are training data and which data are test data? 	
+Random selection of majority of available data of sufficient size, and then smaller random selection of available data should be set aside as test data.
+3.Beware, this problem contains irrelevant data while some important numbers are not explicitly presented. A model was trained on 300 individuals where 149 had the cold and 151 were healthy. The model was tested on 100 individuals where 10 were ill. The model correctly predicted that 85 of the healthy individuals were indeed healthy and correctly predicted that 7 of the ill individuals were indeed ill. The other predictions were incorrect. Consult Wikipedia: http://en.wikipedia.org/wiki/Precision_and_recall and construct a confusion matrix and then calculate the following: 
+a)Sensitivity 
+	True Positive Rate (TPR)=TP/(TP+FN)= 85/90
+b)Specificity 
+	True Negative Rate (TNR) = TN/(TN+FP) = 7/(7+3) = 7/10
+c)Accuracy 
+	ACC = (TP+TN)/P+N) = (85+7)/100 =92/100
+d)Precision 
+	POSITIVE PREDICTIVE VALUE(PPV)=TP/(TP+FP) = 85/88
+e)Recall 
+	True Positive Rate (TPR)=TP/(TP+FN)= 85/90
+Test data:90 healthy, 10 ill
+Prediction: 85 predicted/90 healthy, 7 predicted/10sick
+	Healthy	Sick
+Predicted correctly (Positive)	85 (TP)	7 (TN)
+Predicted incorrectly(Negative)	3 (FP)	5 (FN)
+
+4.The probability threshold for a classification varies in an ROC chart from 0 to 1. 
+a)What point of the graph corresponds to a threshold of zero? 
+	(1,1) the possibility of True Positive is 100% and possibility of False positive is 100%
+b)What point of the graph corresponds to a threshold of one? 
+	(0,0) 
+c)What point of the graph corresponds to a threshold of 0.5? (trick question) 
+	Depends on the model and the data. It’s somewhere between (1,1) and (0,0)
+5.A Classification is tested on 1000 cases. In the middle of its ROC chart, where the false positive rate is 0.4, the true positive rate is 0.8. The accuracy is 0.7. 
+a)What does the confusion matrix look like? 
+	Total data point = 1000, FPR=0.4, TPR=0.8, Accuracy = 0.7
+FPR=FP/(N) = 0.4=FP/(FP+TN)
+TPR=TP/(P)= 0.8=TP/(TP+FN)
+ACC=(TP+TN)/(P+N)=0.7=(TP+TN)/1000
+TOTAL=P+N = 1000
+(P+N)*ACC=(TP+TN)=1000*0.7=700=(TP+TN)
+(P+N)-(TP+TN)=(FT+FN) = 1000-700=300= (FP+FN)
+TP=400, TN= 300, FP=200, FN=100
+	Actual Positive	Actual Negative
+Predicted Positive	400	200
+Predicted Negative	100	300
+
+b)What can you say about the probability threshold at that point? (trick question) 
+	Nothing! We can’t derive the possibility threshold with the given info
