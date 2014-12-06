@@ -1,4 +1,4 @@
-# HomeWork08_WernerColangelo.sql.R
+# HomeWork08_WernerColangelo.sql
 #
 # DATASCI 250: Introduction to Data Science (4690)
 # Autumn 14
